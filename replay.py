@@ -11,6 +11,7 @@ class ReplayBuffer:
         self.size = size
         self.buffer = []
         self.cur = 0
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def __len__(self):
         return len(self.buffer)
@@ -31,5 +32,5 @@ class ReplayBuffer:
             rewards.append(reward)
             next_states.append(next_state)
             dones.append(done)
-        return (torch.tensor(states), torch.tensor(actions), torch.tensor(rewards),
-                torch.tensor(next_states), torch.tensor(dones))
+        return (torch.stack(states).to(self.device), torch.tensor(actions).to(self.device), torch.tensor(rewards).to(self.device),
+                torch.stack(next_states).to(self.device), torch.tensor(dones).to(self.device))

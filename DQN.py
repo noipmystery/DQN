@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
 
 
 class DQN(nn.Module):
@@ -19,9 +20,9 @@ class DQN(nn.Module):
         self.fc5 = nn.Linear(in_features=512, out_features=num_actions)
 
     def forward(self, x):
+        # print('forward: shape = {}'.format(x.shape))
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         x = F.relu(self.conv3(x))
-        x = F.relu(self.fc4(x.view(x.shape[0], -1)))
-        x = F.relu(self.fc5(x))
-        return x
+        x = F.relu(self.fc4(x.view(x.size(0), -1)))
+        return self.fc5(x)
