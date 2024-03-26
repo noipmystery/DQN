@@ -1,9 +1,9 @@
-import gymnasium as gym
-from gymnasium.wrappers import GrayScaleObservation, ResizeObservation
+import gym
+from gym.wrappers import AtariPreprocessing, FrameStack
 
 
 def make_env(env_name):
     env = gym.make(env_name)
-    env = GrayScaleObservation(env)
-    env = ResizeObservation(env, 84)
+    env = AtariPreprocessing(env, scale_obs=False, terminal_on_life_loss=True)
+    env = FrameStack(env, num_stack=4)
     return env

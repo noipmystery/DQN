@@ -16,6 +16,10 @@ class ReplayBuffer:
     def __len__(self):
         return len(self.buffer)
 
+    def transform(self, lazy_frame):
+        state = torch.from_numpy(lazy_frame.__array__()[None] / 255).float()
+        return state.to(self.device)
+
     def push(self, state, action, reward, next_state, done):
         if len(self.buffer) == self.size:
             self.buffer[self.cur] = (state, action, reward, next_state, done)
@@ -26,7 +30,11 @@ class ReplayBuffer:
     def sample(self, batch_size):
         states, actions, rewards, next_states, dones = [], [], [], [], []
         for _ in range(batch_size):
-            state, action, reward, next_state, done = self.buffer[random.randint(0, len(self.buffer) - 1)]
+            frame, action, reward, next_frame, done = self.buffer[random.randint(0, len(self.buffer) - 1)]
+            state = self.transform(frame)
+            next_state = self.transform(next_frame)
+            state = torch.squeeze(state, 0)
+            next_state = torch.squeeze(next_state, 0)
             states.append(state)
             actions.append(action)
             rewards.append(reward)

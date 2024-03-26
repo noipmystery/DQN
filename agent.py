@@ -23,17 +23,19 @@ class Agent:
         self.target_network = DQN(in_channels, num_actions).to(self.device)
         self.target_network.load_state_dict(self.q_network.state_dict())
         self.optimizer = optim.RMSprop(self.q_network.parameters(), lr=lr, eps=epsilon, alpha=alpha)
+        # self.optimizer = optim.Adam(self.q_network.parameters(), lr=3e-3)
 
     def greedy(self, state, epsilon):
         """
         Take actions with state under epsilon-greedy policy
         """
-        if random.random() <= epsilon:
-            return random.randint(0, self.num_actions - 1)
+        if random.random() < epsilon:
+            action = random.randrange(self.num_actions)
         else:
-            state = state[None]
             q_values = self.q_network(state).detach().cpu().numpy()
-            return np.argmax(q_values)
+            action = np.argmax(q_values)
+            del q_values
+        return action
 
     def calculate_loss(self, states, actions, rewards, next_states, dones):
         """
@@ -43,13 +45,9 @@ class Agent:
         """
         tmp = self.q_network(states)
         rewards = rewards.to(self.device)
-        # print(rewards)
         q_values = tmp[range(states.shape[0]), actions.long()]
-        # print(q_values)
         default = rewards + self.gamma * self.target_network(next_states).max(dim=1)[0]
-        # print(default)
         target = torch.where(dones.to(self.device), rewards, default).to(self.device).detach()
-        # print(target)
         return F.mse_loss(target, q_values)
 
     def reset(self):
@@ -62,8 +60,11 @@ class Agent:
         if batch_size < len(self.replay):
             states, actions, rewards, next_states, dones = self.replay.sample(batch_size)
             loss = self.calculate_loss(states, actions, rewards, next_states, dones)
+            # print(f"loss : {loss}")
             self.optimizer.zero_grad()
             loss.backward()
+            for param in self.q_network.parameters():
+                param.grad.data.clamp_(-1, 1)
             self.optimizer.step()
             return loss.item()
         return 0
