@@ -15,7 +15,7 @@ class Agent:
     def __init__(self, in_channels, num_actions, c, lr, alpha, gamma, epsilon, replay_size):
         self.num_actions = num_actions
         self.replay = ReplayBuffer(replay_size)
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
         print(self.device)
         self.c = c
         self.gamma = gamma
@@ -63,8 +63,6 @@ class Agent:
             # print(f"loss : {loss}")
             self.optimizer.zero_grad()
             loss.backward()
-            for param in self.q_network.parameters():
-                param.grad.data.clamp_(-1, 1)
             self.optimizer.step()
             return loss.item()
         return 0

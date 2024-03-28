@@ -10,7 +10,7 @@ batch_size = 32
 learning_rate = 3e-4
 gamma = 0.99
 epsilon_begin = 1.0
-epsilon_end = 0.2
+epsilon_end = 0.01
 epsilon_decay = 200000
 epsilon_min = 0.001
 alpha = 0.95
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     env = make_env(env_name)
     agent = agent.Agent(in_channels=env.observation_space.shape[0], num_actions=env.action_space.n, c=update,
                         lr=learning_rate, alpha=alpha, gamma=gamma, epsilon=epsilon_min, replay_size=memory_size)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
     frame = env.reset()[0]
     total_reward = 0
@@ -39,7 +39,9 @@ if __name__ == '__main__':
     episodes = 0
     current_time = datetime.now()
     formatted_time = current_time.strftime("%Y %m %d %H %M %S")
-    writer = SummaryWriter(log_dir=f'./logs/{formatted_time}-env{env_name}-lr{learning_rate}-alpha{alpha}')
+    log = f'./logs/breakout/{formatted_time}-lr{learning_rate}alpha{alpha}memory{memory_size}update{update}\
+epsilon{epsilon_min}end{epsilon_end}batch_size{batch_size}'
+    writer = SummaryWriter(log_dir=log)
 
     for _ in range(total_frame):
         eps = epsilon(_)
@@ -65,7 +67,6 @@ if __name__ == '__main__':
             print('frame : {}, loss : {:.8f}, reward : {}'.format(_, loss, cur_reward))
             writer.add_scalar('loss', loss, _)
             writer.add_scalar('reward', cur_reward, _)
-            writer.add_scalar('epsilon', eps, _)
 
         if done:
             episodes += 1
